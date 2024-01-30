@@ -1,31 +1,62 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '../supabase/client';
 
-export function LocalStorageNotes() {
-  const [notes, setNotes] = useState<string[]>([]);
+interface data {
+  note: string,
+  id: number
+}
+
+export function SupabaseNotes() {
+  const [notes, setNotes] = useState<data[]>([]);
   const [newNote, setNewNote] = useState<string>('');
 
   useEffect(() => {
-    const storedNotes = JSON.parse(localStorage.getItem('notes') || '[]') as string[];
-    if (storedNotes.length > 0) {
-      setNotes(storedNotes)
+    supabase.auth.signInWithPassword({
+      email: 'fredlikesminecraft@gmail.com',
+      password: 'minecraft'
+    })
+  }, [])
+
+  const fetchData = async () => {
+    const { data, error } = await supabase
+      .from("notes")
+      .select("note, id")
+
+    if (data) {
+      setNotes(data)
     }
-  }, []);
+    if (error) {
+      console.error("Could not fetch the data", error)
+    }
+  }
 
   useEffect(() => {
-    localStorage.setItem('notes', JSON.stringify(notes));
-  }, [notes]);
+    fetchData()
+  }, [notes])
 
-  const addNote = () => {
-    if (newNote.trim() !== '') {
-      setNotes([...notes, newNote]);
-      setNewNote('');
+  const addNote = async () => {
+    if (newNote.trim() !== "") {
+      const { error } = await supabase
+        .from("notes")
+        .insert({ note: newNote })
+
+      if (error) {
+        console.error(error)
+      } else {
+        setNewNote('')
+      }
     }
   };
 
-  const deleteNote = (index: number) => {
-    const updatedNotes = [...notes];
-    updatedNotes.splice(index, 1);
-    setNotes(updatedNotes);
+  const deleteNote = async (index: number) => {
+    const { error } = await supabase
+      .from("notes")
+      .delete()
+      .eq("id", index)
+
+    if (error) {
+      console.error("Unable to delete note ", error)
+    }
   };
 
   return (
@@ -49,11 +80,11 @@ export function LocalStorageNotes() {
       </div>
 
       <ul>
-        {notes.map((note, index) => (
-          <li key={index} className="mb-2">
-            {note}
+        {notes.map((data) => (
+          <li key={data.id} className="mb-2">
+            {data.note}
             <button
-              onClick={() => deleteNote(index)}
+              onClick={() => deleteNote(data.id)}
               className="ml-2 text-red-500"
             >
               Delete

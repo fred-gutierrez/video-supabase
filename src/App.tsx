@@ -1,7 +1,8 @@
-import { LocalStorageNotes } from "./components/LocalStorageNotes";
+// import { LocalStorageNotes } from "./components/LocalStorageNotes";
+import { SupabaseNotes } from "./components/SupabaseNotes";
 
 const App = () => {
-  return <LocalStorageNotes />
+  return (<SupabaseNotes />)
 };
 
 export default App;
